@@ -4,9 +4,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.nvision.printstat.dal.repository.JobRepository;
 import ru.nvision.printstat.model.Job;
 import ru.nvision.printstat.model.Statistics;
+import ru.nvision.printstat.services.JobService;
 import ru.nvision.printstat.services.StatisticsServiceImpl;
 
 import java.time.Instant;
@@ -20,12 +20,12 @@ import java.util.Optional;
 public class ConsumePrinterDataController {
 
     private final StatisticsServiceImpl statisticsService;
-    private final JobRepository jobRepository;
+    private final JobService jobService;
 
     @Autowired
-    public ConsumePrinterDataController(StatisticsServiceImpl statisticsService, JobRepository jobRepository) {
+    public ConsumePrinterDataController(StatisticsServiceImpl statisticsService, JobService jobService) {
         this.statisticsService = statisticsService;
-        this.jobRepository = jobRepository;
+        this.jobService = jobService;
     }
 
     @RequestMapping(
@@ -35,8 +35,7 @@ public class ConsumePrinterDataController {
             method = RequestMethod.POST)
     public ResponseEntity<Map<String, Integer>> consumePrinterData(@RequestBody List<Job> printData) {
         long timestamp = Instant.now().toEpochMilli();
-        printData.forEach(job -> job.setTime(timestamp));
-        jobRepository.saveAll(printData);
+        jobService.saveJobs(printData, timestamp);
         return ResponseEntity.ok(statisticsService.aggregateDataForSession(printData, timestamp));
     }
 
